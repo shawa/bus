@@ -1,8 +1,8 @@
 #!/bin/sh
 
 readonly API_URL='http://www.dublinked.ie/cgi-bin/rtpi'
-readonly CREDENTIALS=''
-readonly STOPS_CACHE='stops.json'
+readonly CREDENTIALS="$(cat ./credentials.txt)"
+readonly STOPS_CACHE='/var/tmp/bus_stops.json'
 
 function usage {
     cat <<EOF
@@ -32,14 +32,13 @@ EOF
 
 function tabulate {
     awk -F ':' 'BEGIN {OFS=":";}{print  "\033[1;34m"$1"\033[0m",$2,$3}' \
-    | column -t -s ':' \
-    | column
+        | column -t -s ':' \
+        | column
 }
 
 function rtpi_query {
     local stop_id="$1"
     local route_id="$2"
-    local quiet_mode=""
 
     curl -su "$CREDENTIALS" "$API_URL/realtimebusinformation?stopid=$stop_id&routeid=$route_id" \
         | jq -r '

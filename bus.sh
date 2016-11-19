@@ -1,7 +1,8 @@
-#!/bin/sh
+#!/bin/bash
+set -euo pipefail
+IFS=$'\n\t'
 
-readonly API_URL='http://www.dublinked.ie/cgi-bin/rtpi'
-readonly CREDENTIALS="$(cat ./credentials.txt)"
+readonly API_URL='https://www.dublinked.ie/cgi-bin/rtpi'
 readonly STOPS_CACHE='/var/tmp/bus_stops.json'
 
 function usage {
@@ -40,7 +41,7 @@ function rtpi_query {
     local stop_id="$1"
     local route_id="$2"
 
-    curl -su "$CREDENTIALS" "$API_URL/realtimebusinformation?stopid=$stop_id&routeid=$route_id" \
+    curl -s "$API_URL/realtimebusinformation?stopid=$stop_id&routeid=$route_id" \
         | jq -r '
                 if (.errorcode == "0") then (
                     .results[]
@@ -97,7 +98,7 @@ function route {
     [ "$2" = "lu" ] && operator="LUAS"
 
     printf "Fetching..."
-    data="$(curl -su "$CREDENTIALS" "$API_URL/routeinformation?routeid=$route_id&operator=$operator")"
+    data="$(curl -s "$API_URL/routeinformation?routeid=$route_id&operator=$operator")"
     printf "\r"
     echo "$data" \
     | jq -r '.results[] | "\(.origin) to \(.destination)"'
@@ -152,5 +153,5 @@ function main {
     exit 0;
 }
 
-[ ! -f "$STOPS_CACHE" ] && curl -su "$CREDENTIALS" "$API_URL/busstopinformation" > "$STOPS_CACHE"
+[ ! -f "$STOPS_CACHE" ] && curl -s "$API_URL/busstopinformation" > "$STOPS_CACHE"
 main $*
